@@ -102,7 +102,8 @@ for i in data.values:
         item_reviews[i[1]] = [i[3]]
         item_rid[i[1]]=[i[0]]
 
-
+# data是train 占0.8
+# data2是test 占0.2 再过滤掉train中数据where 没有出现在test中
 for i in data2.values:
     if user_reviews.has_key(i[0]):
         l=1

@@ -41,6 +41,7 @@ def clean_str(string):
     string = re.sub(r"\s{2,}", " ", string)
     return string.strip().lower()
 
+# padding 策略 不够补前置0；多余截掉后半部分
 def pad_sentences(u_text,u_len,padding_word="<PAD/>"):
     """
     Pads all sentences to the same length. The length is defined by the longest sentence.
@@ -123,6 +124,7 @@ def load_data(train_data,valid_data,user_review,item_review):
     print len(vocabulary_user)
     print len(vocabulary_item)
     u_text, i_text = build_input_data(u_text, i_text, vocabulary_user, vocabulary_item)
+    # user_text 变为{user1: [wordid1, wordid2, wordid3, ...]}
     y_train = np.array(y_train)
     y_valid = np.array(y_valid)
     uid_train = np.array(uid_train)
@@ -146,10 +148,10 @@ def load_data_and_labels(train_data,valid_data,user_review,item_review):
 
     user_reviews=pickle.load(f1)
     item_reviews=pickle.load(f2)
-    uid_train = []
-    iid_train = []
-    y_train=[]
-    u_text = {}
+    uid_train = []  # trainset 中所有userid [u1, u2, u3...]
+    iid_train = []  # trainset 中所有itemid [i1, i2, i3...]
+    y_train=[]  # trainset 中rating [r1, r2, r3...]
+    u_text = {}  # {user1: [word1, word2, word3]"}
     i_text = {}
     i = 0
     for line in f_train:
@@ -204,18 +206,18 @@ def load_data_and_labels(train_data,valid_data,user_review,item_review):
     print "len"
     u = np.array([len(x) for x in u_text.itervalues()])
     x = np.sort(u)
-    u_len = x[int(0.85* len(u)) - 1]
+    u_len = x[int(0.85* len(u)) - 1]  # 每个user的reviews document的总长度排序 取第0.85长的长度
 
 
     i = np.array([len(x) for x in i_text.itervalues()])
     y = np.sort(i)
-    i_len = y[int(0.85 * len(i)) - 1]
+    i_len = y[int(0.85 * len(i)) - 1]  # 每个item的reviews document的总长度排序 取第0.85长的长度
     print "u_len:",u_len
     print "i_len:",i_len
     user_num = len(u_text)
     item_num = len(i_text)
-    print "user_num:", user_num
-    print "item_num:", item_num
+    print "user_num:", user_num  # user个数
+    print "item_num:", item_num  # item个数
     return [u_text,i_text,y_train,y_valid,u_len,i_len,uid_train,iid_train,uid_valid,iid_valid,user_num,item_num]
 
 
@@ -272,7 +274,7 @@ if __name__ == '__main__':
     para={}
     para['user_num']=user_num
     para['item_num']=item_num
-    para['user_length']=u_text[0].shape[0]
+    para['user_length']=u_text[0].shape[0]  # 每个user的reviews document中共有多少个word
     para['item_length'] = i_text[0].shape[0]
     para['user_vocab'] = vocabulary_user
     para['item_vocab'] = vocabulary_item

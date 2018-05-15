@@ -64,3 +64,15 @@ python train.py
 
 
 Last Update Date: Jan 3, 2018
+
+
+
+# 源泉修改
+train.csv: user,item,rating
+user_reviews: {userid: [review0, review1, ...]}  只是train中的，没有val/test中的
+user_rid: {userid: [itemid1, itemid2, ...]}
+
+
+u_text: {user: [wordid1, wordid2, ...]} review顺序无关，reviews内部有顺序
+i_text: {item: [wordid1, wordid2, ...]}  两个text用的word_id映射可以不一样 奇怪
+

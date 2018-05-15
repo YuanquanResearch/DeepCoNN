@@ -66,7 +66,7 @@ class DeepCoNN(object):
                     name="pool")
                 pooled_outputs_u.append(pooled)
         num_filters_total = num_filters * len(filter_sizes)
-        self.h_pool_u = tf.concat(3,pooled_outputs_u)
+        self.h_pool_u = tf.concat(pooled_outputs_u, 3)
         self.h_pool_flat_u = tf.reshape(self.h_pool_u, [-1, num_filters_total])
 
         pooled_outputs_i = []
@@ -94,7 +94,7 @@ class DeepCoNN(object):
                     name="pool")
                 pooled_outputs_i.append(pooled)
         num_filters_total = num_filters * len(filter_sizes)
-        self.h_pool_i = tf.concat(3,pooled_outputs_i)
+        self.h_pool_i = tf.concat(pooled_outputs_i, 3)
         self.h_pool_flat_i = tf.reshape(self.h_pool_i, [-1, num_filters_total])
 
         with tf.name_scope("dropout"):
@@ -118,7 +118,7 @@ class DeepCoNN(object):
 
          
         with tf.name_scope('fm'):
-            self.z=tf.nn.relu(tf.concat(1,[self.u_fea,self.i_fea]))
+            self.z=tf.nn.relu(tf.concat([self.u_fea,self.i_fea], 1))
 
             #self.z=tf.nn.dropout(self.z,self.dropout_keep_prob)
 

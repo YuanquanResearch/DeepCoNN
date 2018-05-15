@@ -19,23 +19,28 @@ import datetime
 import pickle
 import DeepCoNN
 
-tf.flags.DEFINE_string("word2vec", "../data/google.bin", "Word2vec file with pre-trained embeddings (default: None)")
-tf.flags.DEFINE_string("valid_data","../data/music/music.valid", " Data for validation")
-tf.flags.DEFINE_string("para_data", "../data/music/music.para", "Data parameters")
-tf.flags.DEFINE_string("train_data", "../data/music/music.train", "Data for training")
+# tf.flags.DEFINE_string("word2vec", "../data/google.bin", "Word2vec file with pre-trained embeddings (default: None)")
+tf.flags.DEFINE_string("word2vec", None, "Word2vec file with pre-trained embeddings (default: None)")
+
+datafile="CDs"
+tf.flags.DEFINE_string("train_data", "../data/%s/train" % datafile, "Data for training")
+tf.flags.DEFINE_string("valid_data","../data/%s/val" % datafile, " Data for validation")
+tf.flags.DEFINE_string("test_data","../data/%s/test" % datafile, " Data for validation")
+tf.flags.DEFINE_string("para_data", "../data/%s/para" % datafile, "Data parameters")
+
 
 # ==================================================
 
 # Model Hyperparameters
 #tf.flags.DEFINE_string("word2vec", "./data/rt-polaritydata/google.bin", "Word2vec file with pre-trained embeddings (default: None)")
-tf.flags.DEFINE_integer("embedding_dim", 300, "Dimensionality of character embedding ")
+tf.flags.DEFINE_integer("embedding_dim", 100, "Dimensionality of character embedding ")
 tf.flags.DEFINE_string("filter_sizes", "3", "Comma-separated filter sizes ")
 tf.flags.DEFINE_integer("num_filters", 100, "Number of filters per filter size")
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability ")
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda")
 tf.flags.DEFINE_float("l2_reg_V", 0, "L2 regularizaion V")
 # Training parameters
-tf.flags.DEFINE_integer("batch_size",100, "Batch Size ")
+tf.flags.DEFINE_integer("batch_size", 128, "Batch Size ")
 tf.flags.DEFINE_integer("num_epochs", 40, "Number of training epochs ")
 tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after this many steps ")
 tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps ")
@@ -103,9 +108,12 @@ if __name__ == '__main__':
     item_num = para['item_num']
     user_length = para['user_length']
     item_length = para['item_length']
+    # print user_length, item_length
+    # exit(0)
     vocabulary_user = para['user_vocab']
     vocabulary_item = para['item_vocab']
     train_length = para['train_length']
+    val_length = para['val_length']
     test_length = para['test_length']
     u_text = para['u_text']
     i_text = para['i_text']
@@ -127,8 +135,8 @@ if __name__ == '__main__':
                 user_length=user_length,
                 item_length=item_length,
                 num_classes=1,
-                user_vocab_size=len(vocabulary_user),
-                item_vocab_size=len(vocabulary_item),
+                user_vocab_size=vocabulary_user,
+                item_vocab_size=vocabulary_item,
                 embedding_size=FLAGS.embedding_dim,
                 fm_k=8,
                 filter_sizes=list(map(int, FLAGS.filter_sizes.split(","))),
@@ -205,7 +213,7 @@ if __name__ == '__main__':
                 sess.run(deep.W2.assign(initW))
 
             l = (train_length / FLAGS.batch_size) + 1
-            print l
+            print "train_length/batchsize: ", l
             ll = 0
             epoch = 1
             best_mae = 5
@@ -221,14 +229,19 @@ if __name__ == '__main__':
             pkl_file.close()
 
             pkl_file = open(FLAGS.valid_data, 'rb')
+            val_data = pickle.load(pkl_file)
+            val_data = np.array(val_data)
+            pkl_file.close()
 
+            pkl_file = open(FLAGS.test_data, 'rb')
             test_data = pickle.load(pkl_file)
             test_data = np.array(test_data)
             pkl_file.close()
 
             data_size_train = len(train_data)
+            data_size_val = len(val_data)
             data_size_test = len(test_data)
-            batch_size = 100
+            batch_size = FLAGS.batch_size
             ll = int(len(train_data) / batch_size)
 
             for epoch in range(40):
@@ -236,6 +249,7 @@ if __name__ == '__main__':
                 shuffle_indices = np.random.permutation(np.arange(data_size_train))
                 shuffled_data = train_data[shuffle_indices]
                 for batch_num in range(ll):
+                    print "epoch %d batch num %d" % (epoch, batch_num)
                     start_index = batch_num * batch_size
                     end_index = min((batch_num + 1) * batch_size, data_size_train)
                     data_train = shuffled_data[start_index:end_index]
@@ -255,43 +269,37 @@ if __name__ == '__main__':
                     train_rmse += t_rmse
                     train_mae += t_mae
 
-                    if batch_num % 1000 == 0 and batch_num > 1:
-                        print("\nEvaluation:")
-                        print batch_num
-                        loss_s = 0
-                        accuracy_s = 0
-                        mae_s = 0
 
-                        ll_test = int(len(test_data) / batch_size) + 1
-                        for batch_num2 in range(ll_test):
-                            start_index = batch_num2 * batch_size
-                            end_index = min((batch_num2 + 1) * batch_size, data_size_test)
-                            data_test = test_data[start_index:end_index]
-
-                            userid_valid, itemid_valid, y_valid = zip(*data_test)
-
-                            u_valid = []
-                            i_valid = []
-                            for i in range(len(userid_valid)):
-                                u_valid.append(u_text[userid_valid[i][0]])
-                                i_valid.append(i_text[itemid_valid[i][0]])
-                            u_valid = np.array(u_valid)
-                            i_valid = np.array(i_valid)
-
-                            loss, accuracy, mae = dev_step(u_valid, i_valid, userid_valid, itemid_valid, y_valid)
-                            loss_s = loss_s + len(u_valid) * loss
-                            accuracy_s = accuracy_s + len(u_valid) * np.square(accuracy)
-                            mae_s = mae_s + len(u_valid) * mae
-                        print ("loss_valid {:g}, rmse_valid {:g}, mae_valid {:g}".format(loss_s / test_length,
-                                                                                         np.sqrt(
-                                                                                             accuracy_s / test_length),
-                                                                                         mae_s / test_length))
-
-                print str(epoch) + ':\n'
-                print("\nEvaluation:")
-                print "train:rmse,mae:", train_rmse / ll, train_mae / ll
+                print("\nepoch %d: Evaluation after one iteration, bug:" % epoch)
+                print "train: mse %.4f mae %.4f:" % ((train_rmse / ll) ** 2, train_mae / ll)
                 train_rmse = 0
                 train_mae = 0
+
+                loss_s = 0
+                accuracy_s = 0
+                mae_s = 0
+
+                ll_val = int(len(val_data) / batch_size) + 1
+                for batch_num in range(ll_val):
+                    start_index = batch_num * batch_size
+                    end_index = min((batch_num + 1) * batch_size, data_size_val)
+                    data_val = val_data[start_index:end_index]
+
+                    userid_valid, itemid_valid, y_valid = zip(*data_val)
+                    u_valid = []
+                    i_valid = []
+                    for i in range(len(userid_valid)):
+                        u_valid.append(u_text[userid_valid[i][0]])
+                        i_valid.append(i_text[itemid_valid[i][0]])
+                    u_valid = np.array(u_valid)
+                    i_valid = np.array(i_valid)
+
+                    loss, accuracy, mae = dev_step(u_valid, i_valid, userid_valid, itemid_valid, y_valid)
+                    loss_s = loss_s + len(u_valid) * loss
+                    accuracy_s = accuracy_s + len(u_valid) * np.square(accuracy)
+                    mae_s = mae_s + len(u_valid) * mae
+                print ("valid: mse %.4f mae %.4f loss %.4f" % (accuracy_s / val_length,
+                                                                   mae_s / val_length, loss_s / val_length))
 
                 loss_s = 0
                 accuracy_s = 0
@@ -316,17 +324,17 @@ if __name__ == '__main__':
                     loss_s = loss_s + len(u_valid) * loss
                     accuracy_s = accuracy_s + len(u_valid) * np.square(accuracy)
                     mae_s = mae_s + len(u_valid) * mae
-                print ("loss_valid {:g}, rmse_valid {:g}, mae_valid {:g}".format(loss_s / test_length,
-                                                                                 np.sqrt(accuracy_s / test_length),
-                                                                                 mae_s / test_length))
+                print ("test:  mse %.4f mae %.4f loss %.4f" % (accuracy_s / test_length,
+                                                                   mae_s / test_length, loss_s / test_length))
+
                 rmse = np.sqrt(accuracy_s / test_length)
                 mae = mae_s / test_length
                 if best_rmse > rmse:
                     best_rmse = rmse
                 if best_mae > mae:
                     best_mae = mae
-                print("")
-            print 'best rmse:', best_rmse
+
+            print 'best mse:', best_rmse ** 2
             print 'best mae:', best_mae
 
     print 'end'
