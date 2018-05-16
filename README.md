@@ -76,3 +76,8 @@ user_rid: {userid: [itemid1, itemid2, ...]}
 u_text: {user: [wordid1, wordid2, ...]} review顺序无关，reviews内部有顺序
 i_text: {item: [wordid1, wordid2, ...]}  两个text用的word_id映射可以不一样 奇怪
 
+CDs: u_len/i_len 选0.8
+Movies: u_len/i_len 选0.7
+
+重要参数是drop_keep
+

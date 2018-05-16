@@ -74,11 +74,11 @@ def get_uitext(file, tofile):
 
     u = np.array([len(x) for x in u_text.itervalues()])
     x = np.sort(u)
-    u_len = x[int(0.80 * len(u)) - 1]  # 每个user的reviews document的总长度排序 取第0.85长的长度
+    u_len = x[int(0.70 * len(u)) - 1]  # 每个user的reviews document的总长度排序 取第0.85长的长度
 
     i = np.array([len(x) for x in i_text.itervalues()])
     y = np.sort(i)
-    i_len = y[int(0.80 * len(i)) - 1]  # 每个item的reviews document的总长度排序 取第0.85长的长度
+    i_len = y[int(0.70 * len(i)) - 1]  # 每个item的reviews document的总长度排序 取第0.85长的长度
 
     # u_len = max([len(x) for x in u_text.values()])  # 一个user最长的word list
     # i_len = max([len(x) for x in i_text.values()])

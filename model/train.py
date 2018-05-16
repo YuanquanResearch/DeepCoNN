@@ -18,11 +18,15 @@ import datetime
 
 import pickle
 import DeepCoNN
+import sys
 
 # tf.flags.DEFINE_string("word2vec", "../data/google.bin", "Word2vec file with pre-trained embeddings (default: None)")
 tf.flags.DEFINE_string("word2vec", None, "Word2vec file with pre-trained embeddings (default: None)")
 
-datafile="CDs"
+datafile = "CDs"
+datafile, keep, seed = sys.argv[1:]
+keep = float(keep)
+seed = int(seed)
 tf.flags.DEFINE_string("train_data", "../data/%s/train" % datafile, "Data for training")
 tf.flags.DEFINE_string("valid_data","../data/%s/val" % datafile, " Data for validation")
 tf.flags.DEFINE_string("test_data","../data/%s/test" % datafile, " Data for validation")
@@ -36,7 +40,7 @@ tf.flags.DEFINE_string("para_data", "../data/%s/para" % datafile, "Data paramete
 tf.flags.DEFINE_integer("embedding_dim", 100, "Dimensionality of character embedding ")
 tf.flags.DEFINE_string("filter_sizes", "3", "Comma-separated filter sizes ")
 tf.flags.DEFINE_integer("num_filters", 100, "Number of filters per filter size")
-tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability ")
+tf.flags.DEFINE_float("dropout_keep_prob", keep, "Dropout keep probability ")
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda")
 tf.flags.DEFINE_float("l2_reg_V", 0, "L2 regularizaion V")
 # Training parameters
@@ -118,8 +122,8 @@ if __name__ == '__main__':
     u_text = para['u_text']
     i_text = para['i_text']
 
-    np.random.seed(2017)
-    random_seed = 2017
+    np.random.seed(seed)
+    random_seed = seed
 
     with tf.Graph().as_default():
 
@@ -215,10 +219,10 @@ if __name__ == '__main__':
             l = (train_length / FLAGS.batch_size) + 1
             print "train_length/batchsize: ", l
             ll = 0
-            epoch = 1
-            best_mae = 5
-            best_rmse = 5
-            train_mae = 0
+            # epoch = 1
+            # best_mae = 5
+            # best_rmse = 5
+            # train_mae = 0
             train_rmse = 0
 
             pkl_file = open(FLAGS.train_data, 'rb')
@@ -244,7 +248,20 @@ if __name__ == '__main__':
             batch_size = FLAGS.batch_size
             ll = int(len(train_data) / batch_size)
 
+            best_val = float("inf")
+            pre_val = float("inf")
+            best_test = float("inf")
+
+            marked_train = 0.0
+            marked_test = 0.0
+
+            marked_epoch = -1
+            overfitting = 0
+
+            from time import time
             for epoch in range(40):
+
+                t1 = time()
                 # Shuffle the data at each epoch
                 shuffle_indices = np.random.permutation(np.arange(data_size_train))
                 shuffled_data = train_data[shuffle_indices]
@@ -267,17 +284,14 @@ if __name__ == '__main__':
                     t_rmse, t_mae = train_step(u_batch, i_batch, uid, iid, y_batch, batch_num)
                     current_step = tf.train.global_step(sess, global_step)
                     train_rmse += t_rmse
-                    train_mae += t_mae
 
 
                 print("\nepoch %d: Evaluation after one iteration, bug:" % epoch)
-                print "train: mse %.4f mae %.4f:" % ((train_rmse / ll) ** 2, train_mae / ll)
+                print "train: mse %.4f" % ((train_rmse / ll) ** 2)
                 train_rmse = 0
-                train_mae = 0
 
-                loss_s = 0
-                accuracy_s = 0
-                mae_s = 0
+                val_loss = 0
+                val_mse = 0
 
                 ll_val = int(len(val_data) / batch_size) + 1
                 for batch_num in range(ll_val):
@@ -295,15 +309,15 @@ if __name__ == '__main__':
                     i_valid = np.array(i_valid)
 
                     loss, accuracy, mae = dev_step(u_valid, i_valid, userid_valid, itemid_valid, y_valid)
-                    loss_s = loss_s + len(u_valid) * loss
-                    accuracy_s = accuracy_s + len(u_valid) * np.square(accuracy)
-                    mae_s = mae_s + len(u_valid) * mae
-                print ("valid: mse %.4f mae %.4f loss %.4f" % (accuracy_s / val_length,
-                                                                   mae_s / val_length, loss_s / val_length))
+                    val_loss = val_loss + len(u_valid) * loss
+                    val_mse = val_mse + len(u_valid) * np.square(accuracy)
 
-                loss_s = 0
-                accuracy_s = 0
-                mae_s = 0
+                val_mse /= val_length
+                val_loss /= val_length
+                print ("valid: mse %.4f, loss %.4f" % (val_mse, val_loss))
+
+                test_loss = 0
+                test_mse = 0
 
                 ll_test = int(len(test_data) / batch_size) + 1
                 for batch_num in range(ll_test):
@@ -311,30 +325,41 @@ if __name__ == '__main__':
                     end_index = min((batch_num + 1) * batch_size, data_size_test)
                     data_test = test_data[start_index:end_index]
 
-                    userid_valid, itemid_valid, y_valid = zip(*data_test)
-                    u_valid = []
-                    i_valid = []
-                    for i in range(len(userid_valid)):
-                        u_valid.append(u_text[userid_valid[i][0]])
-                        i_valid.append(i_text[itemid_valid[i][0]])
-                    u_valid = np.array(u_valid)
-                    i_valid = np.array(i_valid)
+                    userid_test, itemid_test, y_test = zip(*data_test)
+                    u_test = []
+                    i_test = []
+                    for i in range(len(userid_test)):
+                        u_test.append(u_text[userid_test[i][0]])
+                        i_test.append(i_text[itemid_test[i][0]])
+                    u_test = np.array(u_test)
+                    i_test = np.array(i_test)
 
-                    loss, accuracy, mae = dev_step(u_valid, i_valid, userid_valid, itemid_valid, y_valid)
-                    loss_s = loss_s + len(u_valid) * loss
-                    accuracy_s = accuracy_s + len(u_valid) * np.square(accuracy)
-                    mae_s = mae_s + len(u_valid) * mae
-                print ("test:  mse %.4f mae %.4f loss %.4f" % (accuracy_s / test_length,
-                                                                   mae_s / test_length, loss_s / test_length))
+                    loss, accuracy, mae = dev_step(u_test, i_test, userid_test, itemid_test, y_test)
+                    test_loss = test_loss + len(u_test) * loss
+                    test_mse = test_mse + len(u_test) * np.square(accuracy)
 
-                rmse = np.sqrt(accuracy_s / test_length)
-                mae = mae_s / test_length
-                if best_rmse > rmse:
-                    best_rmse = rmse
-                if best_mae > mae:
-                    best_mae = mae
+                test_mse /= test_length
+                test_loss /= test_length
+                print ("test: mse %.4f, loss %.4f" % (test_mse, test_loss))
+                print "epoch %d done, time %.1f: " % (epoch, time()-t1)
 
-            print 'best mse:', best_rmse ** 2
-            print 'best mae:', best_mae
+                if val_mse < best_val:
+                    marked_epoch = epoch
+                    marked_train = (train_rmse / ll) ** 2
+                    best_val = val_mse
+                    marked_test = test_mse
+
+                best_test = min(best_test, test_mse)
+
+                if val_mse < pre_val:
+                    overfitting = 0
+                else:
+                    overfitting += 1
+                pre_val = val_mse
+                if overfitting >= 5:
+                    break
+
+            print "last. epoch %d, train %.4f, val %.4f, test %.4f(%.4f)" % \
+                  (marked_epoch, marked_train, best_val, marked_test, best_test)
 
     print 'end'
