@@ -151,5 +151,5 @@ class DeepCoNN(object):
 
         with tf.name_scope("accuracy"):
             self.mae = tf.reduce_mean(tf.abs(tf.subtract(self.predictions, self.input_y)))
-            self.accuracy =tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.predictions, self.input_y))))
+            self.accuracy = tf.reduce_mean(tf.square(tf.subtract(self.predictions, self.input_y)))
 

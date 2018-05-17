@@ -124,13 +124,15 @@ if __name__ == '__main__':
 
     with tf.Graph().as_default():
 
+        np.random.seed(seed)
+        tf.set_random_seed(seed)
+
         session_conf = tf.ConfigProto(
             allow_soft_placement=FLAGS.allow_soft_placement,
             log_device_placement=FLAGS.log_device_placement)
         session_conf.gpu_options.allow_growth = True
         sess = tf.Session(config=session_conf)
-        np.random.seed(seed)
-        tf.set_random_seed(seed)
+
 
         with sess.as_default():
             deep = DeepCoNN.DeepCoNN(
@@ -310,7 +312,7 @@ if __name__ == '__main__':
 
                     loss, accuracy, mae = dev_step(u_valid, i_valid, userid_valid, itemid_valid, y_valid)
                     val_loss = val_loss + len(u_valid) * loss
-                    val_mse = val_mse + len(u_valid) * np.square(accuracy)
+                    val_mse = val_mse + len(u_valid) * accuracy
 
                 val_mse /= val_length
                 val_loss /= val_length
@@ -336,7 +338,7 @@ if __name__ == '__main__':
 
                     loss, accuracy, mae = dev_step(u_test, i_test, userid_test, itemid_test, y_test)
                     test_loss = test_loss + len(u_test) * loss
-                    test_mse = test_mse + len(u_test) * np.square(accuracy)
+                    test_mse = test_mse + len(u_test) * accuracy
 
                 test_mse /= test_length
                 test_loss /= test_length
