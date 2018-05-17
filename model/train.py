@@ -122,9 +122,6 @@ if __name__ == '__main__':
     u_text = para['u_text']
     i_text = para['i_text']
 
-    np.random.seed(seed)
-    random_seed = seed
-
     with tf.Graph().as_default():
 
         session_conf = tf.ConfigProto(
@@ -132,6 +129,9 @@ if __name__ == '__main__':
             log_device_placement=FLAGS.log_device_placement)
         session_conf.gpu_options.allow_growth = True
         sess = tf.Session(config=session_conf)
+        np.random.seed(seed)
+        tf.set_random_seed(seed)
+
         with sess.as_default():
             deep = DeepCoNN.DeepCoNN(
                 user_num=user_num,
@@ -148,7 +148,7 @@ if __name__ == '__main__':
                 l2_reg_lambda=FLAGS.l2_reg_lambda,
                 l2_reg_V=FLAGS.l2_reg_V,
                 n_latent=32)
-            tf.set_random_seed(random_seed)
+            
             global_step = tf.Variable(0, name="global_step", trainable=False)
 
             # optimizer = tf.train.AdagradOptimizer(learning_rate=0.1, initial_accumulator_value=1e-8).minimize(deep.loss)
