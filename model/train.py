@@ -358,10 +358,10 @@ if __name__ == '__main__':
                 else:
                     overfitting += 1
                 pre_val = val_mse
-                if overfitting >= 5:
+                if overfitting >= 3:
                     break
 
             print "last. epoch %d, train %.4f, val %.4f, test %.4f(%.4f)" % \
                   (marked_epoch, marked_train, best_val, marked_test, best_test)
 
-    print 'end'
+    # print 'end'
