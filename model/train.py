@@ -39,7 +39,7 @@ tf.flags.DEFINE_string("para_data", "../data/%s/para" % datafile, "Data paramete
 #tf.flags.DEFINE_string("word2vec", "./data/rt-polaritydata/google.bin", "Word2vec file with pre-trained embeddings (default: None)")
 tf.flags.DEFINE_integer("embedding_dim", 100, "Dimensionality of character embedding ")
 tf.flags.DEFINE_string("filter_sizes", "3", "Comma-separated filter sizes ")
-tf.flags.DEFINE_integer("num_filters", 100, "Number of filters per filter size")
+tf.flags.DEFINE_integer("num_filters", 80, "Number of filters per filter size")
 tf.flags.DEFINE_float("dropout_keep_prob", keep, "Dropout keep probability ")
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda")
 tf.flags.DEFINE_float("l2_reg_V", 0, "L2 regularizaion V")
@@ -155,7 +155,8 @@ if __name__ == '__main__':
 
             # optimizer = tf.train.AdagradOptimizer(learning_rate=0.1, initial_accumulator_value=1e-8).minimize(deep.loss)
 
-            optimizer = tf.train.AdamOptimizer(0.002, beta1=0.9, beta2=0.999, epsilon=1e-8).minimize(deep.loss)
+            # optimizer = tf.train.AdamOptimizer(0.002, beta1=0.9, beta2=0.999, epsilon=1e-8).minimize(deep.loss)
+            optimizer = tf.train.AdadeltaOptimizer().minimize(deep.loss)
             '''optimizer=tf.train.RMSPropOptimizer(0.002)
             grads_and_vars = optimizer.compute_gradients(deep.loss)'''
             train_op = optimizer  # .apply_gradients(grads_and_vars, global_step=global_step)
@@ -358,7 +359,7 @@ if __name__ == '__main__':
                 else:
                     overfitting += 1
                 pre_val = val_mse
-                if overfitting >= 5:
+                if overfitting >= 3:
                     break
 
             print "last. epoch %d, train %.4f, val %.4f, test %.4f(%.4f)" % \

@@ -81,3 +81,22 @@ Movies: u_len/i_len 选0.7
 
 重要参数是drop_keep
 
+
+deepconn:
+music:
+u_len, i_len: 2854 5208
+
+CDs: 0.8 u_len的划分比例 (要么就直接选test，不在val上选)
+参数：drop_keep
+drop_keep: 0.8
+(0.9035), 0.9860: /home/users/luyq/research/DeepCoNN/model/CDs_0.8_2017
+
+
+Movies: 0.7 U_len的划分比例
+drop_keep: 1.0
+1.1469: /disk1t/lup/research/DeepCoNN/model/Movies_1.0.bak
+[1.1528, 1.1454, 1.1471, 1.1424]
+
+patient 由5变为3
+DeepCoNN等待结果：CDs和Movies
+/disk1t/lup/research/DeepCoNN/model
