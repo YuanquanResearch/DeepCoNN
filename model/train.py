@@ -39,7 +39,7 @@ tf.flags.DEFINE_string("para_data", "../data/%s/para" % datafile, "Data paramete
 #tf.flags.DEFINE_string("word2vec", "./data/rt-polaritydata/google.bin", "Word2vec file with pre-trained embeddings (default: None)")
 tf.flags.DEFINE_integer("embedding_dim", 100, "Dimensionality of character embedding ")
 tf.flags.DEFINE_string("filter_sizes", "3", "Comma-separated filter sizes ")
-tf.flags.DEFINE_integer("num_filters", 100, "Number of filters per filter size")
+tf.flags.DEFINE_integer("num_filters", 80, "Number of filters per filter size")
 tf.flags.DEFINE_float("dropout_keep_prob", keep, "Dropout keep probability ")
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda")
 tf.flags.DEFINE_float("l2_reg_V", 0, "L2 regularizaion V")
@@ -261,7 +261,7 @@ if __name__ == '__main__':
             overfitting = 0
 
             from time import time
-            for epoch in range(40):
+            for epoch in range(50):
 
                 t1 = time()
                 # Shuffle the data at each epoch

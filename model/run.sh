@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 
-datafile='CDs'
+datafile='Movies'
 
-#keeps=('0.6' '0.8' '0.9')
+#keeps=('0.5' '1.0')
 #keeps=('0.5' '0.6')
 #keeps=('0.7' '0.8')
-keeps=('0.9' '1.0')
+keeps=('1.0')
 
 seeds=('2017' '2018' '2019' '2020' '2021')
-seeds=('2017' '2018')
+seeds=('2018' '2019')
+seeds=('2020' '2021')
 
 for keep in ${keeps[@]};do
 for seed in ${seeds[@]};do
